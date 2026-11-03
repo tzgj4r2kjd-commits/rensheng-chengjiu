@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人生成就解锁 v0.1.1</title>
+<style>
+:root{ --bg:#1c1f26; --panel:#242831; --ink:#e8e6e1; --sub:#9aa0ab; --line:#363b46;
+  --gold:#e8b74a; --epic:#a86fe8; --rare:#4a90e8; --common:#9aa0ab; --legend:#e8754a;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+.wrap{max-width:860px;margin:0 auto;padding:24px 18px 60px}
+header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+h1{font-size:26px;letter-spacing:1px}
+.tagline{color:var(--sub);font-size:14px}
+.ver{font-size:12px;color:var(--sub);border:1px solid var(--line);border-radius:10px;padding:1px 8px}
+.privacy{background:#22322a;border:1px solid #35543f;border-radius:10px;padding:10px 14px;font-size:13px;color:#8fc79a;margin:14px 0 22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+.card h2{font-size:17px;margin-bottom:12px}
+.muted{color:var(--sub);font-size:13px}
+input[type=text],input[type=number],select{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;background:#1d212a;color:var(--ink)}
+button.act{background:var(--gold);color:#241d0c;border:none;border-radius:10px;padding:10px 20px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+button.act:hover{filter:brightness(1.08)}
+button.ghost{background:#1d212a;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+button.ghost:hover{background:#2b303c}
+.formrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.formrow input[type=text]{flex:1;min-width:200px}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:12px}
+.acard{background:#1d212a;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:transform .15s,border-color .15s;position:relative;overflow:hidden}
+.acard:hover{transform:translateY(-3px)}
+.acard.hiddenA{border-style:dashed}
+.acard .t{font-size:14px;font-weight:600;margin:6px 0 2px;word-break:break-all}
+.acard .r{font-size:12px}
+.acard .d{font-size:11px;color:var(--sub);margin-top:4px}
+.rtier{display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;color:#14161a;font-weight:600}
+.progresswrap{margin-top:10px}
+.pbar{height:8px;background:#1d212a;border-radius:4px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--gold);border-radius:4px}
+/* ---- 弹窗 ---- */
+#overlay{position:fixed;inset:0;background:rgba(10,12,16,.82);display:none;z-index:100;align-items:center;justify-content:center;flex-direction:column}
+#overlay.show{display:flex}
+#fxCanvas{position:fixed;inset:0;pointer-events:none;z-index:101}
+.rays{position:absolute;width:560px;height:560px;border-radius:50%;
+  background:repeating-conic-gradient(from 0deg, rgba(232,183,74,.14) 0deg 9deg, transparent 9deg 20deg);
+  animation:spin 14s linear infinite;opacity:0;transition:opacity .6s}
+@keyframes spin{to{transform:rotate(360deg)}}
+.badgeWrap{position:relative;width:190px;height:190px;display:flex;align-items:center;justify-content:center}
+.badge{width:170px;height:170px;border-radius:50%;position:relative;overflow:hidden;
+  background:radial-gradient(circle at 32% 28%, #fdf1cf 0%, #e8b74a 28%, #9c6f1f 62%, #5e3f0e 100%);
+  box-shadow:0 0 40px rgba(232,183,74,.55), 0 8px 30px rgba(0,0,0,.6), inset 0 3px 8px rgba(255,255,255,.5), inset 0 -6px 12px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+  animation:pop .7s cubic-bezier(.2,1.6,.4,1) both}
+.badge.epic{background:radial-gradient(circle at 32% 28%, #eadcf8 0%, #a86fe8 30%, #6a35ab 62%, #3c1d66 100%);box-shadow:0 0 46px rgba(168,111,232,.6),0 8px 30px rgba(0,0,0,.6),inset 0 3px 8px rgba(255,255,255,.5),inset 0 -6px 12px rgba(0,0,0,.4)}
+.badge.rare{background:radial-gradient(circle at 32% 28%, #d8e9fb 0%, #4a90e8 30%, #23579f 62%, #12315c 100%);box-shadow:0 0 46px rgba(74,144,232,.6),0 8px 30px rgba(0,0,0,.6),inset 0 3px 8px rgba(255,255,255,.5),inset 0 -6px 12px rgba(0,0,0,.4)}
+.badge.common{background:radial-gradient(circle at 32% 28%, #e6e8ec 0%, #9aa0ab 30%, #5c626c 62%, #363b44 100%);box-shadow:0 0 30px rgba(154,160,171,.4),0 8px 30px rgba(0,0,0,.6),inset 0 3px 8px rgba(255,255,255,.5),inset 0 -6px 12px rgba(0,0,0,.4)}
+.badge.legend{background:radial-gradient(circle at 32% 28%, #fce3cf 0%, #e8754a 30%, #a53e1c 62%, #5c1e0a 100%);box-shadow:0 0 60px rgba(232,117,74,.7),0 8px 30px rgba(0,0,0,.6),inset 0 3px 8px rgba(255,255,255,.5),inset 0 -6px 12px rgba(0,0,0,.4)}
+@keyframes pop{0%{transform:scale(0) rotate(-160deg)}60%{transform:scale(1.15) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+.shine{position:absolute;top:-30%;left:-80%;width:60%;height:160%;transform:rotate(25deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+  animation:sweep 1.4s ease .35s 2}
+@keyframes sweep{0%{left:-80%}100%{left:140%}}
+.badge svg{width:84px;height:84px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.35))}
+.ring{position:absolute;inset:12px;border-radius:50%;border:2px solid rgba(255,255,255,.35);pointer-events:none}
+#popupTitle{margin-top:26px;font-size:15px;letter-spacing:6px;color:#c9c4b8}
+#popupName{margin-top:10px;font-size:26px;font-weight:700;color:#fff;opacity:0;animation:rise .5s ease .45s both;max-width:80%;text-align:center}
+#popupRarity{margin-top:8px;font-size:15px;color:var(--gold);opacity:0;animation:rise .5s ease .7s both}
+#popupStreak{margin-top:4px;font-size:13px;color:var(--sub);opacity:0;animation:rise .5s ease .85s both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#closePopup{margin-top:28px;opacity:0;animation:rise .5s ease 1.1s both}
+/* ---- 班味社畜彩蛋角色（统一IP，来自时薪换算器同款，精神档） ---- */
+#mascot{position:fixed;right:12px;bottom:14px;z-index:110;width:126px;pointer-events:none;text-align:center;transform:translateX(118%);transition:transform .3s ease}
+#mascot.peek{transform:translateX(46%)}
+#mascot.here{transform:translateX(0)}
+#mascot.peek svg{animation:peekw .3s ease}
+@keyframes peekw{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.mascot .bubble{position:absolute;bottom:100%;right:0;margin-bottom:6px;background:#fdfdff;color:#454e66;border:1px solid #9aa5c4;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.5;opacity:0;transition:opacity .25s;max-width:190px;text-align:left}
+.mascot .bubble.show{opacity:1}
+.char .face{fill:#ffe3d0;transition:fill .3s}
+.char .hair{fill:#3d3a45;transform-origin:70px 40px;transition:transform .3s}
+.char .ahoge{fill:none;stroke:#3d3a45;stroke-width:3;stroke-linecap:round;transform-origin:70px 16px}
+.char .eye{fill:#333;transition:transform .12s,opacity .2s;transform-box:fill-box;transform-origin:center}
+.char .bag{fill:#7a5a6a;opacity:0}
+.char .mouth{fill:none;stroke:#a0522d;stroke-width:2.5;stroke-linecap:round;transition:opacity .1s}
+.char .mouthO{fill:none;stroke:#a0522d;stroke-width:2.5;opacity:0;transition:opacity .1s}
+.char .star{fill:#f5c542;stroke:#c98f1a;stroke-width:1;opacity:0;transform:scale(0);transform-box:fill-box;transform-origin:center;transition:transform .25s,opacity .25s}
+.char.shocked .eye{transform:scale(1.55)}
+.char.shocked .mouth{opacity:0}
+.char.shocked .mouthO{opacity:1}
+.char.worship .eye{opacity:0}
+.char.worship .mouthO{opacity:1}
+.char.worship .star{opacity:1;transform:scale(1)}
+@keyframes hop{0%{transform:translateY(0)}40%{transform:translateY(-10px) scale(1.04)}100%{transform:translateY(0) scale(1)}}
+.char.hop{animation:hop .3s ease}
+.char.blink .eye{transform:scaleY(.12)}
+footer{margin-top:30px;text-align:center;color:var(--sub);font-size:12px}
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#e8b74a;color:#241d0c;padding:9px 18px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:120;font-weight:600}
+.toast.show{opacity:.95}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>人生成就解锁</h1>
+    <span class="tagline">连续起床成功 30 天，解锁成就【人类克制者】——把过日子变成打游戏</span>
+    <span class="ver">v0.1.1</span>
+  </header>
+  <div class="privacy">数据只在你浏览器里：你的成就墙上挂了什么、挂了多久，只有这台设备的浏览器知道。成就文本即用即存，不上传任何服务器。</div>
+
+  <div class="card">
+    <h2>解锁一个成就</h2>
+    <div class="muted">写下你刚做到的一件普通小事，稀有度按事件类型、连续天数和历史重复度真实计算——不是随机数字。</div>
+    <div class="formrow" style="margin-top:10px">
+      <input type="text" id="achName" maxlength="30" placeholder="做到了什么？比如：今天做饭了 / 没迟到 / 给妈妈打电话了">
+      <select id="achCat">
+        <option value="生活">生活</option><option value="工作">工作</option><option value="健康">健康</option>
+        <option value="社交">社交</option><option value="学习">学习</option><option value="搞钱">搞钱</option>
+      </select>
+      <input type="number" id="achStreak" min="1" max="3650" value="1" title="连续做到了几天" style="width:150px">
+      <button class="act" onclick="unlock()">解锁</button>
+    </div>
+    <div class="rowline" style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="ghost" onclick="loadSample()">载入示例</button>
+      <button class="ghost" onclick="clearAll()">清空全部数据</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>成就墙 <span class="muted" id="wallCount"></span></h2>
+    <div class="progresswrap"><div class="muted">全成就完成度</div><div class="pbar"><i id="pfill" style="width:0%"></i></div></div>
+    <div class="wall" id="wall"></div>
+  </div>
+
+  <footer>数据仅存本地 · 清空浏览器数据即彻底删除</footer>
+</div>
+
+<div id="overlay">
+  <div class="rays" id="rays"></div>
+  <div class="badgeWrap">
+    <div class="badge" id="theBadge">
+      <div class="ring"></div>
+      <div class="shine"></div>
+      <svg viewBox="0 0 24 24" fill="none" id="badgeIcon">
+        <path d="M7 4h10v3h3v2a4 4 0 0 1-4 4 6 6 0 0 1-2 2.6V18h3v2H7v-2h3v-2.4A6 6 0 0 1 8 13a4 4 0 0 1-4-4V7h3V4z" fill="#fff8e6" stroke="#7a5510" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+  <div id="popupTitle">成 就 已 解 锁</div>
+  <div id="popupName"></div>
+  <div id="popupRarity"></div>
+  <div id="popupStreak"></div>
+  <button class="act" id="closePopup" onclick="closePopup()">收下成就</button>
+</div>
+<canvas id="fxCanvas"></canvas>
+<div id="mascot">
+  <div class="bubble" id="mascotSay"></div>
+  <svg id="mchar" class="char fresh" viewBox="0 0 140 150" width="118" height="126">
+    <g class="whole">
+      <rect x="88" y="118" width="40" height="26" rx="3" fill="#41465a"/>
+      <rect x="84" y="142" width="48" height="6" rx="2" fill="#8a93ad"/>
+      <path d="M46 96 Q70 106 94 96 L100 130 Q70 140 40 130 Z" fill="#5a6ca8"/>
+      <path d="M56 98 L62 116 M84 98 L78 116" stroke="#4a5a8a" stroke-width="2" fill="none"/>
+      <rect x="58" y="114" width="24" height="16" rx="2" fill="#e6eaf5" stroke="#4a5a8a"/>
+      <rect x="62" y="118" width="16" height="3" fill="#9aa5c4"/>
+      <rect x="62" y="123" width="10" height="2" fill="#9aa5c4"/>
+      <g class="head">
+        <path class="ahoge" d="M70 16 Q63 4 52 8"/>
+        <circle class="face" cx="70" cy="56" r="30"/>
+        <path class="hair" d="M38 54 Q34 16 70 14 Q106 16 102 54 Q100 30 70 28 Q40 30 38 54 Z"/>
+        <ellipse class="bag" cx="58" cy="64" rx="6.5" ry="2.6"/>
+        <ellipse class="bag" cx="82" cy="64" rx="6.5" ry="2.6"/>
+        <ellipse class="eye" cx="58" cy="56" rx="4" ry="6"/>
+        <ellipse class="eye" cx="82" cy="56" rx="4" ry="6"/>
+        <path class="mouth" d="M64 72 Q70 77 76 72"/>
+        <path class="mouthO" d="M65.5 71 a4.5 5.2 0 1 0 9 0 a4.5 5.2 0 1 0 -9 0"/>
+        <path class="star" d="M58 46 l2.3 4.7 5.1 .7 -3.7 3.6 .9 5.1 -4.6 -2.4 -4.6 2.4 .9 -5.1 -3.7 -3.6 5.1 -.7 Z"/>
+        <path class="star" d="M82 46 l2.3 4.7 5.1 .7 -3.7 3.6 .9 5.1 -4.6 -2.4 -4.6 2.4 .9 -5.1 -3.7 -3.6 5.1 -.7 Z"/>
+      </g>
+    </g>
+  </svg>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+var LS_KEY="wx_chengjiu_list_v1";
+var CATS=["生活","工作","健康","社交","学习","搞钱"];
+// 基础稀有度：越日常的类别越不稀有
+var BASE={"生活":30,"工作":24,"健康":34,"社交":32,"学习":28,"搞钱":26};
+var TIERS=[
+  {max:1,   name:"传说", cls:"legend", color:"#e8754a"},
+  {max:5,   name:"史诗", cls:"epic",   color:"#a86fe8"},
+  {max:15,  name:"稀有", cls:"rare",   color:"#4a90e8"},
+  {max:100, name:"普通", cls:"common", color:"#9aa0ab"}
+];
+var HARD_KW=["马拉松","辞职","戒","百日","100","体检","公开","谈判","第一次","面试","比赛","考试"];
+var EASY_KW=["起床","上班","上班成功","吃饭","睡觉"];
+
+function loadAll(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"[]"); }catch(e){ return []; } }
+function saveAll(a){ localStorage.setItem(LS_KEY,JSON.stringify(a)); }
+function toast(m){ var t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(function(){t.classList.remove("show");},1800); }
+
+function hashStr(s){ var h=5381; for(var i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return h; }
+
+// 真实稀有度：类别基准 × 连续天数 × 历史重复度 × 难度词 × 文本确定性微调
+function calcRarity(name, cat, days, list){
+  var r=BASE[cat]||30;
+  // 1) 连续性：连续越久越稀有（0.25x ~ 1x）
+  var streakMul = days>=100?0.25 : days>=30?0.4 : days>=14?0.55 : days>=7?0.7 : days>=3?0.85 : 1;
+  r*=streakMul;
+  // 2) 重复度：同类已解锁越多，越不新鲜（+15% 稀有度恢复/个）
+  var sameCat=list.filter(function(a){return a.cat===cat;}).length;
+  r*= (1+Math.min(sameCat,8)*0.15);
+  // 3) 难度词
+  HARD_KW.forEach(function(k){ if(name.indexOf(k)>=0) r*=0.8; });
+  EASY_KW.forEach(function(k){ if(name.indexOf(k)>=0) r*=1.15; });
+  // 4) 文本确定性微调 ±12%（同一事件每次算出来一致）
+  var jit=0.88+ (hashStr(name+"|"+cat)%25)/100; // 0.88~1.12
+  r*=jit;
+  r=Math.max(0.1,Math.min(60,r));
+  return Math.round(r*10)/10;
+}
+function tierOf(r){ for(var i=0;i<TIERS.length;i++){ if(r<TIERS[i].max) return TIERS[i]; } return TIERS[TIERS.length-1]; }
+function tierName(r){
+  if(r<1) return "传说级（全服 <1% 玩家达成）";
+  if(r<5) return "史诗级";
+  if(r<15) return "稀有级";
+  return "普通级";
+}
+function hiddenCheck(list, name, cat, days){
+  // 隐藏成就：同类连续>=7天 且已有同类>=3个
+  var sameCat=list.filter(function(a){return a.cat===cat && a.days>=7;}).length;
+  if(days>=7 && sameCat>=2 && !list.some(function(a){return a.hidden;})){
+    return "生活统治者的觉醒";
+  }
+  return null;
+}
+
+var currentPopup=null;
+// ---------- 班味社畜彩蛋（统一IP：精神档，与时薪换算器同款角色） ----------
+var mchar=document.getElementById("mchar");
+var unlockStreak=0, sayTimer=0;
+function mascSay(t,dur){
+  var b=document.getElementById("mascotSay");
+  b.textContent=t; b.classList.add("show");
+  if(sayTimer) clearTimeout(sayTimer);
+  sayTimer=setTimeout(function(){ b.classList.remove("show"); },dur||2400);
+}
+function mascHop(){ mchar.classList.remove("hop"); void mchar.offsetWidth; mchar.classList.add("hop"); }
+function mascotReact(rec){
+  var m=document.getElementById("mascot");
+  m.classList.remove("peek"); m.classList.add("here");
+  mchar.classList.remove("shocked","worship");
+  if(rec.hidden && rec.rarity>10){ mchar.classList.add("worship"); mascSay("星星眼…这也太厉害了吧"); }
+  else { mchar.classList.add("shocked"); }
+  mascHop();
+  if(unlockStreak>0 && unlockStreak%3===0) mascSay("今天是什么好日子",2600);
+}
+function unlockFlow(rec){
+  mchar.classList.remove("shocked","worship");
+  var m=document.getElementById("mascot");
+  m.classList.remove("here"); m.classList.add("peek");
+  setTimeout(function(){ showPopup(rec); mascotReact(rec); },300);
+}
+function mascotRetire(){
+  var m=document.getElementById("mascot");
+  m.classList.remove("here","peek");
+}
+(function mascBlink(){
+  setInterval(function(){
+    var c=mchar.getAttribute("class");
+    if(c.indexOf("shocked")>=0||c.indexOf("worship")>=0) return;
+    mchar.classList.add("blink");
+    setTimeout(function(){ mchar.classList.remove("blink"); },140);
+  },3400);
+})();
+function unlock(){
+  var name=document.getElementById("achName").value.trim();
+  var cat=document.getElementById("achCat").value;
+  var days=Math.max(1,parseInt(document.getElementById("achStreak").value,10)||1);
+  if(!name){ toast("先写下你做到了什么"); return; }
+  var list=loadAll();
+  var hidden=hiddenCheck(list,name,cat,days);
+  var showName= name + (hidden? " ｜ 触发隐藏成就【"+hidden+"】" : "");
+  var r=calcRarity(name,cat,days,list);
+  var tier=tierOf(r);
+  var rec={ id:Date.now(), name:name, cat:cat, days:days, rarity:r,
+            tier:tier.name, tierCls:tier.cls, color:tier.color,
+            hidden:!!hidden, date:new Date().toISOString().slice(0,10) };
+  list.push(rec); saveAll(list);
+  document.getElementById("achName").value="";
+  renderWall();
+  unlockStreak++;
+  unlockFlow(rec);
+}
+
+function showPopup(rec){
+  currentPopup=rec;
+  var ov=document.getElementById("overlay");
+  var badge=document.getElementById("theBadge");
+  badge.className="badge "+rec.tierCls;
+  // 重触发动画
+  badge.style.animation="none"; void badge.offsetWidth; badge.style.animation="";
+  document.getElementById("rays").style.opacity= (rec.tier==="传说"||rec.tier==="史诗")? "1":"0.5";
+  document.getElementById("popupName").textContent= rec.name + (rec.hidden?"【"+rec.name+"·隐藏】":"");
+  document.getElementById("popupName").textContent= rec.name;
+  document.getElementById("popupStreak").textContent= rec.days>1? ("连续达成 "+rec.days+" 天 · "+rec.date) : rec.date;
+  var rr=document.getElementById("popupRarity");
+  rr.style.color=rec.color;
+  // 百分比滚动
+  var target=rec.rarity;
+  var t0=null;
+  rr.textContent="稀有度 0% 玩家达成";
+  function step(ts){
+    if(t0===null) t0=ts;
+    var p=Math.min((ts-t0)/900,1);
+    var eased=1-Math.pow(1-p,3);
+    rr.textContent="稀有度 "+(target*eased).toFixed(1)+"% 玩家达成 · "+rec.tier;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+  ov.classList.add("show");
+  burstParticles(rec.color);
+  playChime(rec.tier);
+}
+function closePopup(){
+  document.getElementById("overlay").classList.remove("show");
+  stopFx();
+  mascotRetire();
+}
+
+// ---- 粒子迸发（canvas，rAF 驱动）----
+var fxCtx=document.getElementById("fxCanvas").getContext("2d");
+var particles=[], fxRunning=false;
+function resizeFx(){
+  var cv=document.getElementById("fxCanvas");
+  cv.width=window.innerWidth; cv.height=window.innerHeight;
+}
+window.addEventListener("resize",resizeFx);
+function burstParticles(color){
+  resizeFx();
+  var cx=window.innerWidth/2, cy=window.innerHeight/2;
+  var colors=[color,"#f5e2ae","#ffffff",color];
+  for(var i=0;i<140;i++){
+    var a=Math.random()*Math.PI*2, sp=2+Math.random()*7;
+    particles.push({
+      x:cx, y:cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-3,
+      life:60+Math.random()*50, age:0,
+      r:1.5+Math.random()*3,
+      c:colors[i%colors.length]
+    });
+  }
+  if(!fxRunning){ fxRunning=true; requestAnimationFrame(fxLoop); }
+}
+function fxLoop(){
+  var cv=document.getElementById("fxCanvas");
+  fxCtx.clearRect(0,0,cv.width,cv.height);
+  particles=particles.filter(function(p){ return p.age<p.life; });
+  particles.forEach(function(p){
+    p.age++; p.x+=p.vx; p.y+=p.vy; p.vy+=0.13; p.vx*=0.985;
+    var alpha=1-p.age/p.life;
+    fxCtx.globalAlpha=Math.max(alpha,0);
+    fxCtx.fillStyle=p.c;
+    fxCtx.beginPath(); fxCtx.arc(p.x,p.y,p.r,0,7); fxCtx.fill();
+  });
+  fxCtx.globalAlpha=1;
+  if(particles.length){ requestAnimationFrame(fxLoop); }
+  else{ fxRunning=false; fxCtx.clearRect(0,0,cv.width,cv.height); }
+}
+function stopFx(){ particles=[]; }
+
+// ---- 音效：WebAudio 三连音（传说级加一个高音）----
+var audioCtx=null;
+function playChime(tier){
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    var notes= tier==="传说"||tier==="史诗" ? [523.25,659.25,783.99,1046.5] : [523.25,659.25,783.99];
+    notes.forEach(function(f,i){
+      var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.type="triangle"; o.frequency.value=f;
+      var t=audioCtx.currentTime+i*0.12;
+      g.gain.setValueAtTime(0.001,t);
+      g.gain.exponentialRampToValueAtTime(0.18,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t+0.55);
+    });
+  }catch(e){/* 音频不可用就静默 */}
+}
+
+function renderWall(){
+  var list=loadAll();
+  document.getElementById("wallCount").textContent="· 已解锁 "+list.length+" 项";
+  var fill=list.length? Math.min(100,Math.round(list.length/20*100)) : 0;
+  document.getElementById("pfill").style.width=fill+"%";
+  var wall=document.getElementById("wall");
+  if(!list.length){ wall.innerHTML='<div class="muted">成就墙还是空的。今天做到的一件小事，就是第一个成就。</div>'; return; }
+  wall.innerHTML=list.slice().reverse().map(function(a){
+    return '<div class="acard'+(a.hidden?" hiddenA":"")+'" onclick="showPopupById('+a.id+')">'
+      +'<span class="rtier" style="background:'+a.color+'">'+(a.hidden?"隐藏":a.tier)+' '+a.rarity+'%</span>'
+      +'<div class="t">'+escapeHtml(a.name)+'</div>'
+      +'<div class="r muted">'+a.cat+(a.days>1?" · 连续 "+a.days+" 天":"")+'</div>'
+      +'<div class="d">'+a.date+'（点卡片重播弹窗）</div></div>';
+  }).join("");
+}
+function showPopupById(id){
+  var rec=loadAll().find(function(a){return a.id===id;});
+  if(rec) unlockFlow(rec);
+}
+function escapeHtml(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function loadSample(){
+  var samples=[
+    ["今天做饭了","生活",3],["连续没迟到 14 天","工作",14],["给妈妈打电话了","社交",1],
+    ["跑步 5 公里","健康",2],["戒掉睡前刷手机 7 天","生活",7],["读完一本书","学习",1],
+    ["这个月存下 2000 块","搞钱",1],["坚持做饭 30 天","生活",30]
+  ];
+  var list=[];
+  var now=Date.now();
+  samples.forEach(function(s,i){
+    var tier=tierOf(calcRarity(s[0],s[1],s[2],list));
+    list.push({ id:now+i, name:s[0], cat:s[1], days:s[2],
+      rarity:calcRarity(s[0],s[1],s[2],list),
+      tier:tier.name, tierCls:tier.cls, color:tier.color, hidden:false,
+      date:new Date(now-(samples.length-i)*86400000).toISOString().slice(0,10) });
+  });
+  saveAll(list); renderWall(); toast("已载入 8 个示例成就");
+}
+function clearAll(){
+  if(!confirm("清空全部成就？")) return;
+  saveAll([]); renderAll?0:0; renderWall(); toast("已清空");
+}
+
+renderWall();
+</script>
+</body>
+</html>
